@@ -28,5 +28,24 @@ Frontend (Next.js)
 
 ## Run with Docker
 
-```bash
-docker compose up --build
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/PixVault.git
+   cd PixVault
+   ```
+
+2. Set up environment variables:
+   ```bash
+   cp backend/.env.example backend/.env
+   ```
+   Edit `backend/.env` and add your ImageKit API keys (sign up at [ImageKit](https://imagekit.io/)) and any custom DB credentials if needed.
+
+3. Run the application:
+   ```bash
+   docker compose up --build
+   ```
+
+4. Access:
+   - Frontend: http://localhost:3000
+   - API Docs: http://localhost:8001/docs
+   - Database: localhost:5433 (user: postgres, password: as in .env)
