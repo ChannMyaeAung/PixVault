@@ -49,3 +49,9 @@ Frontend (Next.js)
    - Frontend: http://localhost:3000
    - API Docs: http://localhost:8001/docs
    - Database: localhost:5433 (user: postgres, password: as in .env)
+
+5. Adding/removing packages: If you update package.json (e.g., npm install or pnpm add), run `docker exec -it nextjs_app pnpm install` inside the container to sync dependencies.
+
+6. Config changes: If you modify next.config.ts, tailwind.config.js, etc., restart the container: `docker compose restart frontend`.
+
+7. Major structural changes: Rarely needed, but if something breaks, `docker compose up --build frontend` rebuilds.

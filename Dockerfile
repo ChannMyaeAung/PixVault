@@ -38,11 +38,8 @@ RUN pnpm install --frozen-lockfile
 # Copy source code
 COPY frontend/ .
 
-# Build the app
-RUN pnpm run build
-
 # Expose port
 EXPOSE 3000
 
-# Start the app
-CMD ["pnpm", "start"]
+# Start in dev mode for hot reload
+CMD ["pnpm", "dev"]
