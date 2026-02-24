@@ -7,7 +7,7 @@ export async function POST(req: Request) {
 
     const formData = await req.formData();
 
-    const backendRes = await fetch("http://api:8000/upload", {
+    const backendRes = await fetch(`${process.env.FASTAPI_URL}/upload`, {
         method: "POST",
         headers: {
             Authorization: `Bearer ${token}`

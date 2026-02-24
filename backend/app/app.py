@@ -73,7 +73,7 @@ async def upload_file(
     try:
         # Create a temporary file to hold the uploaded content
         with tempfile.NamedTemporaryFile(
-            delete=False, suffix=os.path.splitext(file.filename)[1]
+            delete=False, suffix=os.path.splitext(file.filename or "")[1]
         ) as temp_file:
             temp_file_path = temp_file.name
             shutil.copyfileobj(file.file, temp_file)
@@ -82,7 +82,7 @@ async def upload_file(
             # Upload to ImageKit
             upload_result = imagekit.files.upload(
                 file=upload_file,
-                file_name=file.filename,
+                file_name=file.filename or "upload",
                 use_unique_file_name=True,
                 tags=["backend-upload"],
             )
@@ -163,12 +163,12 @@ async def delete_post(
         result = await session.execute(select(Post).where(Post.id == post_uuid))
 
         # Extract the first Post object from the result (or None if not found)
-        post = result.scalars().first()
+        post = result.scalar_one_or_none()
 
         if not post:
             raise HTTPException(status_code=404, detail="Post not found")
 
-        if post.user_id != user.id:
+        if str(post.user_id) != str(user.id):
             raise HTTPException(
                 status_code=403, detail="You don't have permission to delete this post"
             )

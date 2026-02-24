@@ -1,9 +1,8 @@
-import React from 'react'
+"use client";
+import React from "react";
 
 const PostCard = () => {
-  return (
-    <div>PostCard</div>
-  )
-}
+  return <div>PostCard</div>;
+};
 
-export default PostCard
+export default PostCard;

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
     const body = await req.json();
 
-    const backendRes = await fetch("http://api:8000/auth/register", {
+    const backendRes = await fetch(`${process.env.FASTAPI_URL}/auth/register`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

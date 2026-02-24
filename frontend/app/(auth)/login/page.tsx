@@ -1,47 +1,43 @@
-"use client"
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation'
-import React, { useState } from 'react'
+"use client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useMutation } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 
 const LoginPage = () => {
+  const router = useRouter();
 
-    const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+  const loginMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Login failed");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      router.push("/dashboard");
+    },
+  });
 
-    async function handleLogin(e: React.SubmitEvent) {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-        try {
-            const formData = new FormData();
-            formData.append("username", email); // FastAPI expects "username" field
-            formData.append("password", password);
-
-            const res = await fetch("/api/login", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.detail || "Login failed");
-            }
-
-            router.push("/dashboard");
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setLoading(false)
-        }
-    }
+    const formData = new FormData();
+    formData.append("email", email);
+    formData.append("password", password);
+    loginMutation.mutate(formData);
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
@@ -53,7 +49,7 @@ const LoginPage = () => {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               type="email"
               placeholder="Email"
@@ -70,14 +66,14 @@ const LoginPage = () => {
               onChange={(e) => setPassword(e.target.value)}
             />
 
-            {error && (
+            {loginMutation.isError && (
               <p className="text-sm text-red-500 text-center">
-                {error}
+                {(loginMutation.error as Error).message}
               </p>
             )}
 
-            <Button className="w-full" disabled={loading}>
-              {loading ? (
+            <Button className="w-full" disabled={loginMutation.isPending}>
+              {loginMutation.isPending ? (
                 <Loader2 className="animate-spin h-4 w-4" />
               ) : (
                 "Login"
@@ -94,7 +90,7 @@ const LoginPage = () => {
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};
 
-export default LoginPage
+export default LoginPage;

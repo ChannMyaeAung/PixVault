@@ -5,7 +5,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
 
-    const backendRes = await fetch(`http://api:8000/posts/${params.id}`, {
+    const backendRes = await fetch(`${process.env.FASTAPI_URL}/posts/${params.id}`, {
         method: "DELETE",
         headers: {
             Authorization: `Bearer ${token}`,

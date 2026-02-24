@@ -3,9 +3,23 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
     const formData = await req.formData();
 
-    const backendRes = await fetch("http://api:8000/auth/jwt/login", {
+    // Convert FormData to URLSearchParams (application/x-www-form-urlencoded)
+    const params = new URLSearchParams();
+    formData.forEach((value, key) => {
+        // Map 'email' field to 'username' for FastAPI Users compatibility
+        if (key === "email") {
+            params.append("username", value as string);
+        } else {
+            params.append(key, value as string);
+        }
+    });
+
+    const backendRes = await fetch(`${process.env.FASTAPI_URL}/auth/jwt/login`, {
         method: "POST",
-        body: formData,
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: params.toString(),
     })
 
     const data = await backendRes.json();
