@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import PostCard from "@/components/post-card";
+import Navbar from "@/components/navbar";
 
 const Dashboard = () => {
   const router = useRouter();
@@ -20,7 +21,7 @@ const Dashboard = () => {
       if (!res.ok) {
         throw new Error("Failed to fetch feed");
       }
-      return res.json();
+      return await res.json();
     },
   });
 

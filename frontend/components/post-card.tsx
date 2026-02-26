@@ -17,6 +17,12 @@ const PostCard = ({ post }: { post: PostType }) => {
       if (!res.ok) {
         throw new Error("Failed to delete post");
       }
+
+      // Safely handle 204 status to prevent JSON parsing crashes
+      if (res.status === 204) {
+        return null;
+      }
+
       return res.json();
     },
 
