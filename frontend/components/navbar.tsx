@@ -3,47 +3,82 @@ import { cn } from "@/lib/utils";
 import React, { useState } from "react";
 import { HoveredLink, Menu, MenuItem } from "./ui/navbar-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { PostType } from "@/app/dashboard/type";
 import { ModeToggle } from "./mode-toggle";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 
 const Navbar = ({ className }: { className?: string }) => {
   const [active, setActive] = useState<string | null>(null);
 
-  const {
-    data: user,
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data: user, isError } = useQuery({
     queryKey: ["me"],
     queryFn: async () => {
-      const res = await fetch("/api/me");
+      const res = await fetch("/api/user/me");
       if (!res.ok) throw new Error("Failed to fetch user");
       return res.json();
     },
+    retry: false, // Don't retry on failure, we just want to know if the user is logged in or not, this is to avoid repeated failed requests when logged out.
   });
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error loading user</div>;
+  const isLoggedIn = !isError && !!user;
 
   return (
     <nav
-      className={cn("fixed top-10 inset-x-0 max-w-2xl mx-auto z-50", className)}
+      className={cn("fixed top-10 inset-x-5 max-w-2xl mx-auto z-50", className)}
     >
+      {/* Mobile Menu */}
       <Menu setActive={setActive}>
-        <MenuItem setActive={setActive} active={active} item="Services">
-          <div className="flex flex-col space-y-4 text-sm">
-            <HoveredLink href="/upload">Upload</HoveredLink>
-            <HoveredLink href="/dashboard">Dashboard</HoveredLink>
-            <HoveredLink>
+        <div className="flex sm:hidden items-center justify-center gap-10">
+          <MenuItem setActive={setActive} active={active} item="Menu">
+            <HoveredLink href="/">
+              <div className="text-2xl font-black tracking-tighter">
+                PixVault
+              </div>
+            </HoveredLink>
+            <div className="flex flex-col space-y text-sm">
+              <HoveredLink href="/upload">Upload</HoveredLink>
+              <HoveredLink href="/dashboard">Dashboard</HoveredLink>
+
+              {!isLoggedIn ? (
+                <HoveredLink href="/login">Login</HoveredLink>
+              ) : (
+                <HoveredLink href="/profile">
+                  <Avatar>
+                    <AvatarImage src={user?.url} />
+                    <AvatarFallback>
+                      {user?.email?.split("@")[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                </HoveredLink>
+              )}
+            </div>
+          </MenuItem>
+          <ModeToggle />
+        </div>
+
+        {/* Desktop Menu */}
+        <div className="items-center gap-10 hidden sm:flex">
+          <HoveredLink href="/">
+            <div className="text-2xl font-black tracking-tighter">PixVault</div>
+          </HoveredLink>
+          <HoveredLink href="/upload">Upload</HoveredLink>
+          <HoveredLink href="/dashboard">Dashboard</HoveredLink>
+
+          {!isLoggedIn ? (
+            <HoveredLink href="/login">Login</HoveredLink>
+          ) : (
+            <HoveredLink href="/profile">
               <Avatar>
                 <AvatarImage src={user?.url} />
-                <AvatarFallback>{user?.email?.split("@")[0]}</AvatarFallback>
+                <AvatarFallback>
+                  {user?.email?.split("@")[0].substring(0, 2)}
+                </AvatarFallback>
               </Avatar>
             </HoveredLink>
-          </div>
-        </MenuItem>
-        <ModeToggle />
+          )}
+
+          <ModeToggle />
+        </div>
       </Menu>
     </nav>
   );

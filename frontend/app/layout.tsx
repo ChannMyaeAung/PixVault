@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "./providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import Navbar from "@/components/navbar";
+import FooterPage from "@/components/footer";
 
 const raleway = Raleway({
   subsets: ["latin"],
@@ -31,8 +32,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Providers>
-            <Navbar className="top-2" />
+            <Navbar />
             {children}
+            <FooterPage />
           </Providers>
         </ThemeProvider>
       </body>

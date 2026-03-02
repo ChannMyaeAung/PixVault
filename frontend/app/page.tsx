@@ -1,15 +1,12 @@
-import { cookies } from "next/headers";
-import Image from "next/image";
-import { redirect } from "next/navigation";
+import HeroPage from "@/components/hero";
+import Navbar from "@/components/navbar";
 
 export default async function Home() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('token');
-
-  if (token) {
-    redirect('/dashboard');
-  }
-
-  redirect('/login');
-  
+  return (
+    <div className="min-h-screen flex flex-col font-sans">
+      <main className="flex grow flex-col items-center justify-center text-center px-6 py-20 md:py-32">
+        <HeroPage />
+      </main>
+    </div>
+  );
 }

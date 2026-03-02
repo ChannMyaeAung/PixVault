@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Item, ItemContent, ItemMedia } from "@/components/ui/item";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function ProfilePage() {
   const queryClient = useQueryClient();
@@ -52,7 +54,17 @@ export default function ProfilePage() {
     updateMutation.mutate(updatePayload);
   };
 
-  if (isLoading) return <div className="p-8">Loading profile...</div>;
+  if (isLoading)
+    return (
+      <div className="flex w-full max-w-md mx-auto p-4 flex-col gap-4 [--radius:1rem]">
+        <Item variant={"muted"}>
+          <ItemMedia>
+            <Spinner />
+          </ItemMedia>
+          <ItemContent>Loading feed...</ItemContent>
+        </Item>
+      </div>
+    );
 
   return (
     <div className="max-w-md mx-auto p-8 space-y-6">
