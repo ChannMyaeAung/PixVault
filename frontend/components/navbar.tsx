@@ -26,15 +26,13 @@ const Navbar = ({ className }: { className?: string }) => {
     <nav
       className={cn("fixed top-10 inset-x-5 max-w-2xl mx-auto z-50", className)}
     >
-      {/* Mobile Menu */}
       <Menu setActive={setActive}>
+        {/* Mobile Menu */}
         <div className="flex sm:hidden items-center justify-center gap-10">
+          <HoveredLink href="/">
+            <div className="text-2xl font-black tracking-tighter">PixVault</div>
+          </HoveredLink>
           <MenuItem setActive={setActive} active={active} item="Menu">
-            <HoveredLink href="/">
-              <div className="text-2xl font-black tracking-tighter">
-                PixVault
-              </div>
-            </HoveredLink>
             <div className="flex flex-col space-y text-sm">
               <HoveredLink href="/upload">Upload</HoveredLink>
               <HoveredLink href="/dashboard">Dashboard</HoveredLink>

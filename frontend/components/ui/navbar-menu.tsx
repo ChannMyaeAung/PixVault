@@ -113,7 +113,7 @@ export const ProductItem = ({
   );
 };
 
-export const HoveredLink = ({ children, ...rest }: any) => {
+export const HoveredLink = ({ children, ...rest }: { children: React.ReactNode; [key: string]: any }) => {
   return (
     <Link
       {...rest}

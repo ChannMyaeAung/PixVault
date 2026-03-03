@@ -5,7 +5,7 @@ import React from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { LockIcon, Smartphone, Zap } from "lucide-react";
-import FeatureCard from "./feature-card";
+import FeaturesCard from "./features-card";
 
 const HeroPage = () => {
   const { data: user, isError } = useQuery({
@@ -21,12 +21,12 @@ const HeroPage = () => {
   const isLoggedIn = !isError && !!user;
 
   return (
-    <div className="max-w-3xl space-y-8">
-      <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight ">
-        Your Secure <span className="text-blue-600">Media Vault</span>
+    <div className="max-w-7xl w-full mx-auto space-y-8">
+      <h1 className="text-5xl flex flex-col md:flex-row items-center justify-center md:text-7xl font-extrabold tracking-tight gap-3">
+        Your Secure <span className="text-blue-600"> Media Vault</span>
       </h1>
 
-      <p className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+      <p className="text-lg md:text-xl text-center max-w-2xl mx-auto leading-relaxed">
         Store, manage, and protect your personal phots and videos with ease.
         Built with lightning-fast web technologies to ensure your privacy statys
         strictly yours.
@@ -59,23 +59,8 @@ const HeroPage = () => {
       </div>
 
       {/* Feature Grid*/}
-      <div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl w-full text-left">
-        <FeatureCard
-          icon={<LockIcon />}
-          title="Secure by Design"
-          description="Your media is kept completely private. Only you hold the keys to view your memories."
-        />
-        <FeatureCard
-          icon={<Zap />}
-          title="Lightning Fast"
-          description="Powered by a high-performance backend so your uploads and galleries load instantly."
-        />
-        <FeatureCard
-          icon={<Smartphone />}
-          title="Access Anywhere"
-          description="Responsive design ensures your vault looks perfect on your phone, tablet, or desktop."
-        />
-      </div>
+
+      <FeaturesCard />
     </div>
   );
 };

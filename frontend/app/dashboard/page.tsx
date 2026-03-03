@@ -4,10 +4,26 @@ import { FeedResponse, PostType } from "./type";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import PostCard from "@/components/post-card";
-import Navbar from "@/components/navbar";
 import { Item, ItemContent, ItemMedia } from "@/components/ui/item";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { IconCloud } from "@tabler/icons-react";
+import Link from "next/link";
 
 const Dashboard = () => {
   const router = useRouter();
@@ -29,38 +45,87 @@ const Dashboard = () => {
 
   if (isLoading)
     return (
-      <div className="flex w-full max-w-md mx-auto p-4 flex-col gap-4 [--radius:1rem]">
-        <Item variant={"muted"}>
-          <ItemMedia>
-            <Spinner />
-          </ItemMedia>
-          <ItemContent>Loading feed...</ItemContent>
-        </Item>
+      <div className="min-h-screen pt-36 px-4 sm:px-6">
+        <div className="max-w-md mx-auto">
+          <Item variant={"muted"}>
+            <ItemMedia>
+              <Spinner />
+            </ItemMedia>
+            <ItemContent>Loading feed...</ItemContent>
+          </Item>
+        </div>
       </div>
     );
   if (isError)
     return (
-      <div className="p-8 text-red-500 text-center font-medium">
-        Unable to load your feed at this time.
+      <div className="min-h-screen pt-36 px-4 sm:px-6">
+        <Card className="max-w-xl mx-auto border-destructive/30">
+          <CardHeader>
+            <CardTitle className="text-destructive">
+              Unable to load feed
+            </CardTitle>
+            <CardDescription>
+              Something went wrong while fetching your posts.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => window.location.reload()}>Try again</Button>
+          </CardContent>
+        </Card>
       </div>
     );
 
+  const postCount = data?.posts.length ?? 0;
+
   return (
-    <div className="min-h-screen">
-      <Navbar />
-      <main>
-        {/* Page Header */}
-        <div>
-          <div>
-            <h1>Your Feed</h1>
-            <p>Securely view and manage your uploaded media.</p>
-            <Button></Button>
-          </div>
-        </div>
+    <div className="min-h-screen pt-36 pb-16 px-4 sm:px-6">
+      <main className="max-w-6xl mx-auto space-y-8">
+        <Card>
+          <CardHeader className="gap-3 sm:flex sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-2">
+              <CardTitle className="text-2xl sm:text-3xl">Your Feed</CardTitle>
+              <CardDescription>
+                Securely view, manage, and delete your uploaded media.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                {postCount} {postCount === 1 ? "post" : "posts"}
+              </span>
+              <Button onClick={() => router.push("/upload")}>
+                Upload New Media
+              </Button>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {postCount === 0 ? (
+          <Empty className="border border-dashed">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <IconCloud />
+              </EmptyMedia>
+              <EmptyTitle>Cloud Storage Empty</EmptyTitle>
+              <EmptyDescription>
+                Upload files to your cloud storage to access them anywhere.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Link href="/upload">
+                <Button variant="outline" size="sm">
+                  Upload Files
+                </Button>
+              </Link>
+            </EmptyContent>
+          </Empty>
+        ) : (
+          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {data?.posts.map((post: PostType) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+          </section>
+        )}
       </main>
-      {data?.posts.map((post: PostType) => (
-        <PostCard key={post.id} post={post} />
-      ))}
     </div>
   );
 };

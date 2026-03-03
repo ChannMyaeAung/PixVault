@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,9 @@ export default function UploadPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+
+  // Ref for the hidden file input to reset its value when removing the preview, allowing the user to upload the same file again if they want to after removing it
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Clean up object URLs to prevent memory leaks when preview changes or unmounts
   useEffect(() => {
@@ -61,6 +64,17 @@ export default function UploadPage() {
     uploadPost.mutate();
   };
 
+  const handleRemovePreview = () => {
+    setPreview(null);
+    setFile(null);
+
+    // Reset file input so that the user can upload the same file or video again after removing it
+    // This is to fix an issue where the user upload a file, removes it, and then tries to upload the same file again but nothing happens because the file input value doesn't change (since it's the same file)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   // Drag and drop event handlers
   const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -80,13 +94,13 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6">
-      <div className="max-w-xl mx-auto space-y-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6">
+      <div className="w-full max-w-md mx-auto space-y-8">
         {/* Navigation */}
         <div className="flex items-center">
           <Link
             href="/dashboard"
-            className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-2"
+            className="text-sm font-medium transition-colors flex items-center gap-2"
           >
             <span aria-hidden="true">&larr;</span> Back to Vault
           </Link>
@@ -94,10 +108,8 @@ export default function UploadPage() {
 
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Upload Media
-          </h1>
-          <p className="text-slate-500 mt-2 text-sm">
+          <h1 className="text-3xl font-bold tracking-tight ">Upload Media</h1>
+          <p className=" mt-2 text-sm">
             Add a new photo or video to your secure vault.
           </p>
         </div>
@@ -105,14 +117,12 @@ export default function UploadPage() {
         {/* Upload Form */}
         <form
           onSubmit={handleSubmit}
-          className="space-y-6 bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm"
+          className="space-y-6 p-6 sm:p-8 rounded-2xl border shadow-sm"
         >
           {/* Drag & Drop Zone / Preview */}
           <div
             className={`relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-xl overflow-hidden transition-all duration-200 ${
-              isDragging
-                ? "border-blue-500 bg-blue-50"
-                : "border-slate-300 bg-slate-50 hover:bg-slate-100"
+              isDragging ? "border-blue-500" : "border-slate-300 "
             }`}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
@@ -135,12 +145,20 @@ export default function UploadPage() {
                     className="object-cover"
                   />
                 )}
+                {/* Remove Button */}
+                <Button
+                  onClick={handleRemovePreview}
+                  className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded shadow z-20"
+                >
+                  Remove
+                </Button>
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <p className="text-white font-medium drop-shadow-md">
                     Click to change media
                   </p>
                 </div>
-                <input
+                <Input
+                  ref={fileInputRef}
                   type="file"
                   accept="image/*,video/*"
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
@@ -166,11 +184,10 @@ export default function UploadPage() {
                     />
                   </svg>
                 </div>
-                <p className="mb-2 text-sm text-slate-600 font-medium">
-                  <span className="text-blue-600">Click to upload</span> or drag
-                  and drop
+                <p className="mb-2 text-sm  font-medium">
+                  <span className="">Click to upload</span> or drag and drop
                 </p>
-                <p className="text-xs text-slate-500">PNG, JPG, MP4 or WEBM</p>
+                <p className="text-xs ">PNG, JPG, MP4 or WEBM</p>
                 <input
                   type="file"
                   accept="image/*,video/*"
@@ -182,11 +199,8 @@ export default function UploadPage() {
           </div>
 
           {/* Caption Input */}
-          <div className="space-y-2">
-            <label
-              htmlFor="caption"
-              className="text-sm font-medium text-slate-900"
-            >
+          <div className="space-y-4">
+            <label htmlFor="caption" className="text-sm font-medium">
               Caption (Optional)
             </label>
             <Input
@@ -195,7 +209,7 @@ export default function UploadPage() {
               placeholder="Write a brief description..."
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
-              className="bg-slate-50"
+              className="mt-2"
             />
           </div>
 

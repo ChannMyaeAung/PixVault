@@ -3,7 +3,7 @@ import Navbar from "@/components/navbar";
 
 export default async function Home() {
   return (
-    <div className="min-h-screen flex flex-col font-sans">
+    <div className="min-h-screen flex flex-col font-sans mt-30">
       <main className="flex grow flex-col items-center justify-center text-center px-6 py-20 md:py-32">
         <HeroPage />
       </main>
