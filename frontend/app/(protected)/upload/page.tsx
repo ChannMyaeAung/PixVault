@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import Image from "next/image";
+import { FileUpload } from "@/components/ui/file-upload";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -15,10 +15,6 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
-  const [isDragging, setIsDragging] = useState(false);
-
-  // Ref for the hidden file input to reset its value when removing the preview, allowing the user to upload the same file again if they want to after removing it
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Clean up object URLs to prevent memory leaks when preview changes or unmounts
   useEffect(() => {
@@ -27,10 +23,14 @@ export default function UploadPage() {
     };
   }, [preview]);
 
-  const handleFileSelection = (selectedFile: File | undefined) => {
-    if (!selectedFile) return;
+  // FIX: Accept an array of files, then extract the first one
+  const handleFileUpload = (files: File[]) => {
+    if (!files || files.length === 0) return;
+
+    const selectedFile = files[0];
     setFile(selectedFile);
-    setPreview(URL.createObjectURL(selectedFile));
+    // You can safely uncomment this now if you need the preview
+    // setPreview(URL.createObjectURL(selectedFile));
   };
 
   const uploadPost = useMutation({
@@ -38,7 +38,7 @@ export default function UploadPage() {
       if (!file) throw new Error("Please select a file to upload");
 
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", file); // This will now properly append a File blob
       formData.append("caption", caption);
 
       const res = await fetch("/api/upload", {
@@ -64,35 +64,6 @@ export default function UploadPage() {
     uploadPost.mutate();
   };
 
-  const handleRemovePreview = () => {
-    setPreview(null);
-    setFile(null);
-
-    // Reset file input so that the user can upload the same file or video again after removing it
-    // This is to fix an issue where the user upload a file, removes it, and then tries to upload the same file again but nothing happens because the file input value doesn't change (since it's the same file)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  // Drag and drop event handlers
-  const onDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-  const onDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFileSelection(e.dataTransfer.files[0]);
-      e.dataTransfer.clearData();
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6">
       <div className="w-full max-w-md mx-auto space-y-8">
@@ -109,7 +80,7 @@ export default function UploadPage() {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold tracking-tight ">Upload Media</h1>
-          <p className=" mt-2 text-sm">
+          <p className=" mt-2 text-sm text-slate-500">
             Add a new photo or video to your secure vault.
           </p>
         </div>
@@ -117,85 +88,11 @@ export default function UploadPage() {
         {/* Upload Form */}
         <form
           onSubmit={handleSubmit}
-          className="space-y-6 p-6 sm:p-8 rounded-2xl border shadow-sm"
+          className="space-y-6 p-6 sm:p-8 rounded-2xl border bg-white dark:bg-black shadow-sm"
         >
           {/* Drag & Drop Zone / Preview */}
-          <div
-            className={`relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-xl overflow-hidden transition-all duration-200 ${
-              isDragging ? "border-blue-500" : "border-slate-300 "
-            }`}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
-          >
-            {preview ? (
-              // Media Preview State
-              <div className="relative w-full h-full group">
-                {file?.type.startsWith("video/") ? (
-                  <video
-                    src={preview}
-                    className="w-full h-full object-cover"
-                    controls
-                  />
-                ) : (
-                  <Image
-                    src={preview}
-                    alt="Preview"
-                    fill
-                    className="object-cover"
-                  />
-                )}
-                {/* Remove Button */}
-                <Button
-                  onClick={handleRemovePreview}
-                  className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded shadow z-20"
-                >
-                  Remove
-                </Button>
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <p className="text-white font-medium drop-shadow-md">
-                    Click to change media
-                  </p>
-                </div>
-                <Input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,video/*"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  onChange={(e) => handleFileSelection(e.target.files?.[0])}
-                />
-              </div>
-            ) : (
-              // Empty Upload State
-              <div className="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
-                <div className="w-12 h-12 mb-3 text-slate-400 bg-white rounded-full shadow-sm flex items-center justify-center border border-slate-100">
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                    />
-                  </svg>
-                </div>
-                <p className="mb-2 text-sm  font-medium">
-                  <span className="">Click to upload</span> or drag and drop
-                </p>
-                <p className="text-xs ">PNG, JPG, MP4 or WEBM</p>
-                <input
-                  type="file"
-                  accept="image/*,video/*"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  onChange={(e) => handleFileSelection(e.target.files?.[0])}
-                />
-              </div>
-            )}
+          <div className="w-full max-w-4xl mx-auto min-h-96 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-lg">
+            <FileUpload onChange={handleFileUpload} />
           </div>
 
           {/* Caption Input */}
@@ -210,6 +107,11 @@ export default function UploadPage() {
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               className="mt-2"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                }
+              }}
             />
           </div>
 
@@ -227,7 +129,7 @@ export default function UploadPage() {
             disabled={!file || uploadPost.isPending}
           >
             {uploadPost.isPending ? (
-              <span className="flex items-center gap-2">
+              <span className="flex items-center justify-center gap-2">
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Uploading securely...
               </span>

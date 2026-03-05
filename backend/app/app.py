@@ -9,7 +9,33 @@ import shutil
 import os
 import uuid
 import tempfile
+from PIL import Image, ImageOps
 from app.users import auth_backend, current_active_user, fastapi_users
+
+
+VIDEO_EXTENSIONS = {".mp4", ".webm", ".mov", ".m4v", ".avi", ".mkv", ".ogv"}
+IMAGE_EXTENSIONS = {
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".webp",
+    ".gif",
+    ".bmp",
+    ".tif",
+    ".tiff",
+    ".avif",
+}
+
+
+def detect_media_type(upload_file: UploadFile) -> str:
+    content_type = (upload_file.content_type or "").lower()
+    extension = os.path.splitext(upload_file.filename or "")[1].lower()
+
+    if content_type.startswith("video/") or extension in VIDEO_EXTENSIONS:
+        return "video"
+    if content_type.startswith("image/") or extension in IMAGE_EXTENSIONS:
+        return "image"
+    return "unknown"
 
 
 # Runs once at startup
@@ -69,20 +95,61 @@ async def upload_file(
 ):
 
     temp_file_path = None
+    processed_file_path = None
+    media_type = detect_media_type(file)
 
     try:
+        if media_type == "unknown":
+            raise HTTPException(
+                status_code=400,
+                detail="Only image and video files are supported.",
+            )
+
         # Create a temporary file to hold the uploaded content
         with tempfile.NamedTemporaryFile(
             delete=False, suffix=os.path.splitext(file.filename or "")[1]
         ) as temp_file:
             temp_file_path = temp_file.name
             shutil.copyfileobj(file.file, temp_file)
-        with open(temp_file_path, "rb") as upload_file:
+        upload_file_name = file.filename or "upload"
+
+        if media_type == "image":
+            with Image.open(temp_file_path) as img:
+                image = ImageOps.exif_transpose(img)
+                width, height = image.size
+                total_pixels = width * height
+
+                max_pixels = 24_000_000
+                if total_pixels > max_pixels:
+                    scale = (max_pixels / total_pixels) ** 0.5
+                    new_size = (
+                        max(1, int(width * scale)),
+                        max(1, int(height * scale)),
+                    )
+                    resized = image.resize(new_size, Image.Resampling.LANCZOS)
+
+                    if resized.mode not in ("RGB", "L"):
+                        resized = resized.convert("RGB")
+
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as processed_file:
+                        processed_file_path = processed_file.name
+
+                    resized.save(
+                        processed_file_path,
+                        format="JPEG",
+                        quality=90,
+                        optimize=True,
+                    )
+                    upload_file_name = f"{os.path.splitext(upload_file_name)[0]}-optimized.jpg"
+
+        source_path = processed_file_path or temp_file_path
+
+        with open(source_path, "rb") as upload_file:
 
             # Upload to ImageKit
             upload_result = imagekit.files.upload(
                 file=upload_file,
-                file_name=file.filename or "upload",
+                file_name=upload_file_name,
                 use_unique_file_name=True,
                 tags=["backend-upload"],
             )
@@ -96,11 +163,7 @@ async def upload_file(
             user_id=user.id,
             caption=caption,
             url=upload_result.url,
-            file_type=(
-                "video"
-                if file.content_type and file.content_type.startswith("video/")
-                else "image"
-            ),
+            file_type=media_type,
             file_name=upload_result.name or file.filename,
         )
         session.add(post)
@@ -108,11 +171,28 @@ async def upload_file(
         await session.refresh(post)
         return post
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_message = str(e)
+        normalized_error = error_message.lower()
+
+        if "ELIMIT" in error_message and "resolution limit" in error_message:
+            raise HTTPException(
+                status_code=400,
+                detail="Image is too large. Please upload a smaller image (under 25 megapixels).",
+            )
+        if "size" in normalized_error and (
+            "limit" in normalized_error or "exceed" in normalized_error
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="File is too large. Please upload a smaller image or video.",
+            )
+        raise HTTPException(status_code=500, detail=error_message)
     finally:
         # Clean up temp file
         if temp_file_path and os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
+        if processed_file_path and os.path.exists(processed_file_path):
+            os.unlink(processed_file_path)
         file.file.close()
 
 

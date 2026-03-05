@@ -71,6 +71,7 @@ const PostCard = ({ post }: { post: PostType }) => {
             src={post.url}
             alt={post.caption}
             fill
+            unoptimized
             className="rounded-lg absolute w-full"
           />
         ) : (
@@ -92,6 +93,7 @@ const PostCard = ({ post }: { post: PostType }) => {
         <Button
           onClick={() => deleteMutation.mutate(post.id)}
           disabled={deleteMutation.isPending}
+          variant={"destructive"}
         >
           {deleteMutation.isPending ? "Deleting..." : "Delete"}
         </Button>

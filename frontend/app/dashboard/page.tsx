@@ -45,7 +45,7 @@ const Dashboard = () => {
 
   if (isLoading)
     return (
-      <div className="min-h-screen pt-36 px-4 sm:px-6">
+      <div className="min-h-screen px-6 py-20 md:py-32">
         <div className="max-w-md mx-auto">
           <Item variant={"muted"}>
             <ItemMedia>
@@ -58,7 +58,7 @@ const Dashboard = () => {
     );
   if (isError)
     return (
-      <div className="min-h-screen pt-36 px-4 sm:px-6">
+      <div className="min-h-screen px-6 py-20 md:py-32">
         <Card className="max-w-xl mx-auto border-destructive/30">
           <CardHeader>
             <CardTitle className="text-destructive">
