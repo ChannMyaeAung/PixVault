@@ -2,7 +2,7 @@
 import { FeedResponse, PostType } from "@/app/dashboard/type";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "./ui/button";
 
 const PostCard = ({ post }: { post: PostType }) => {
@@ -63,17 +63,28 @@ const PostCard = ({ post }: { post: PostType }) => {
     },
   });
 
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div className="border rounded-xl p-4 space-y-3 shadow-sm">
       <div className="max-w-md max-h-md relative aspect-square">
         {post.file_type === "image" ? (
-          <Image
-            src={post.url}
-            alt={post.caption}
-            fill
-            unoptimized
-            className="rounded-lg absolute w-full"
-          />
+          imgError ? (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-muted rounded-lg text-muted-foreground text-sm gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+              <p>Image unavailable</p>
+              <p className="text-xs">This image exceeds the host size limit.<br/>Delete and re-upload to fix.</p>
+            </div>
+          ) : (
+            <Image
+              src={post.url}
+              alt={post.caption}
+              fill
+              unoptimized
+              className="rounded-lg absolute w-full object-cover"
+              onError={() => setImgError(true)}
+            />
+          )
         ) : (
           <video
             src={post.url}

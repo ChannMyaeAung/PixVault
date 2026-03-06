@@ -10,7 +10,10 @@ import os
 import uuid
 import tempfile
 from PIL import Image, ImageOps
+import logging
 from app.users import auth_backend, current_active_user, fastapi_users
+
+logger = logging.getLogger("uvicorn.error")
 
 
 VIDEO_EXTENSIONS = {".mp4", ".webm", ".mov", ".m4v", ".avi", ".mkv", ".ogv"}
@@ -113,11 +116,14 @@ async def upload_file(
             shutil.copyfileobj(file.file, temp_file)
         upload_file_name = file.filename or "upload"
 
+        logger.info(f"Upload: filename={file.filename}, content_type={file.content_type}, media_type={media_type}")
+
         if media_type == "image":
             with Image.open(temp_file_path) as img:
                 image = ImageOps.exif_transpose(img)
                 width, height = image.size
                 total_pixels = width * height
+                logger.info(f"Image dimensions: {width}x{height} = {total_pixels/1_000_000:.1f}MP")
 
                 max_pixels = 24_000_000
                 if total_pixels > max_pixels:
@@ -141,6 +147,7 @@ async def upload_file(
                         optimize=True,
                     )
                     upload_file_name = f"{os.path.splitext(upload_file_name)[0]}-optimized.jpg"
+                    logger.info(f"Resized from {width}x{height} to {new_size[0]}x{new_size[1]}")
 
         source_path = processed_file_path or temp_file_path
 
