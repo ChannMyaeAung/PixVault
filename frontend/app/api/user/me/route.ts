@@ -22,9 +22,21 @@ export async function GET() {
   return NextResponse.json(await res.json());
 }
 
-export async function PATCH() {
+export async function PATCH(req: Request) {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
+  const body = await req.json().catch(() => null);
+
+  if (!token) {
+    return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!body) {
+    return NextResponse.json(
+      { detail: "Invalid request body" },
+      { status: 400 },
+    );
+  }
 
   const res = await fetch(`${process.env.FASTAPI_URL}/users/me`, {
     method: "PATCH",
@@ -32,6 +44,7 @@ export async function PATCH() {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {

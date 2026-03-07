@@ -1,15 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Item, ItemContent, ItemMedia } from "@/components/ui/item";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const [password, setPassword] = useState("");
 
   const { data: user, isLoading } = useQuery({
@@ -21,8 +23,7 @@ export default function ProfilePage() {
     },
   });
 
-  // Use the user's email if available, otherwise use the state value
-  const displayEmail = user?.email ?? email;
+  const currentEmail = emailTouched ? email : (user?.email ?? "");
 
   const updateMutation = useMutation({
     mutationFn: async (updateData: { email?: string; password?: string }) => {
@@ -31,7 +32,12 @@ export default function ProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updateData),
       });
-      if (!res.ok) throw new Error("Failed to update profile");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(
+          (errorData.detail as string) || "Failed to update profile",
+        );
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -39,7 +45,8 @@ export default function ProfilePage() {
       setPassword(""); // Clear the password field for security
       alert("Profile updated successfully!");
     },
-    onError: () => alert("An error occurred updating the profile."),
+    onError: (error) =>
+      toast.error(error.message || "An error occurred updating the profile."),
   });
 
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -47,7 +54,7 @@ export default function ProfilePage() {
 
     // Only send the password payload if the user actually typed a new one
     const updatePayload: { email?: string; password?: string } = {
-      email: displayEmail,
+      email: currentEmail,
     };
     if (password) updatePayload.password = password;
 
@@ -67,15 +74,18 @@ export default function ProfilePage() {
     );
 
   return (
-    <div className="max-w-md mx-auto p-8 space-y-6">
-      <h1 className="text-2xl font-bold">Profile Settings</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="max-w-md mx-auto px-8 flex items-center flex-col justify-center min-h-screen space-y-6">
+      <h1 className="text-2xl font-bold self-start">Profile Settings</h1>
+      <form onSubmit={handleSubmit} className="space-y-4 self-start">
         <div className="space-y-2">
           <label className="text-sm font-medium">Email Address</label>
           <Input
             type="email"
-            value={displayEmail}
-            onChange={(e) => setEmail(e.target.value)}
+            value={currentEmail}
+            onChange={(e) => {
+              setEmailTouched(true);
+              setEmail(e.target.value);
+            }}
             required
           />
         </div>

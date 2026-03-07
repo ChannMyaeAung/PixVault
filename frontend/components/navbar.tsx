@@ -4,11 +4,28 @@ import React, { useState } from "react";
 import { HoveredLink, Menu, MenuItem } from "./ui/navbar-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { ModeToggle } from "./mode-toggle";
-import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  BadgeCheckIcon,
+  BellIcon,
+  CreditCardIcon,
+  LogOutIcon,
+} from "lucide-react";
+import { Button } from "./ui/button";
 
 const Navbar = ({ className }: { className?: string }) => {
   const [active, setActive] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { data: user, isError } = useQuery({
     queryKey: ["me"],
@@ -21,6 +38,14 @@ const Navbar = ({ className }: { className?: string }) => {
   });
 
   const isLoggedIn = !isError && !!user;
+
+  const handleSignOut = async () => {
+    await fetch("/api/logout", { method: "POST" });
+    queryClient.removeQueries({ queryKey: ["me"] });
+    queryClient.removeQueries({ queryKey: ["user"] });
+    router.push("/login");
+    router.refresh();
+  };
 
   return (
     <nav
@@ -40,14 +65,46 @@ const Navbar = ({ className }: { className?: string }) => {
               {!isLoggedIn ? (
                 <HoveredLink href="/login">Login</HoveredLink>
               ) : (
-                <HoveredLink href="/profile">
-                  <Avatar>
-                    <AvatarImage src={user?.url} />
-                    <AvatarFallback>
-                      {user?.email?.split("@")[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                </HoveredLink>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full"
+                    >
+                      <Avatar>
+                        <AvatarImage src={user?.url} />
+                        <AvatarFallback>
+                          {user?.email?.split("@")[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem>
+                        <BadgeCheckIcon />
+                        <HoveredLink href="/profile">Account</HoveredLink>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <CreditCardIcon />
+                        Billing
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <BellIcon />
+                        Notifications
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={handleSignOut}
+                    >
+                      <LogOutIcon />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
           </MenuItem>
@@ -65,14 +122,42 @@ const Navbar = ({ className }: { className?: string }) => {
           {!isLoggedIn ? (
             <HoveredLink href="/login">Login</HoveredLink>
           ) : (
-            <HoveredLink href="/profile">
-              <Avatar>
-                <AvatarImage src={user?.url} />
-                <AvatarFallback>
-                  {user?.email?.split("@")[0].substring(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-            </HoveredLink>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Avatar>
+                    <AvatarImage src={user?.url} />
+                    <AvatarFallback>
+                      {user?.email?.split("@")[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <BadgeCheckIcon />
+                    <HoveredLink href="/profile">Account</HoveredLink>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <CreditCardIcon />
+                    Billing
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <BellIcon />
+                    Notifications
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={handleSignOut}
+                >
+                  <LogOutIcon />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
 
           <ModeToggle />
