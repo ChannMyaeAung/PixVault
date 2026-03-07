@@ -5,31 +5,7 @@ services:
       dockerfile: Dockerfile
       target: backend
     container_name: fastapi_app
-    env_file:
-      - backend/.env
-    depends_on:
-      - db
-
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: frontend-prod
-    container_name: nextjs_app
     ports:
-      - "3000:3000"
-    environment:
-      BACKEND_URL: "http://api:8000"
-    depends_on:
-      - api
-
-  db:
-    image: postgres:16
-    container_name: postgres_db
+      - "8000:8000"
     env_file:
       - backend/.env
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
