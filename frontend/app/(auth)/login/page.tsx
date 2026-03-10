@@ -2,13 +2,15 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { toast } from "sonner";
 
 const LoginPage = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,13 +22,23 @@ const LoginPage = () => {
         body: formData,
       });
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Login failed");
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || errorData.detail || "Login failed.",
+        );
       }
       return res.json();
     },
-    onSuccess: () => {
+    // Invalidate the "me" and "user" queries to update the app state so that when the user logged in, they will see the Avatar instead of Login button in the Navbar
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
+      await queryClient.invalidateQueries({ queryKey: ["user"] });
+      toast.success("Logged in successfully.");
+      router.refresh();
       router.push("/dashboard");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Login failed.");
     },
   });
 
@@ -65,13 +77,6 @@ const LoginPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-
-            {loginMutation.isError && (
-              <p className="text-sm text-red-500 text-center">
-                {(loginMutation.error as Error).message}
-              </p>
-            )}
-
             <Button className="w-full" disabled={loginMutation.isPending}>
               {loginMutation.isPending ? (
                 <Loader2 className="animate-spin h-4 w-4" />

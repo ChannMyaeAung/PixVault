@@ -1,4 +1,5 @@
 import uuid
+import os
 from typing import Optional
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, models
@@ -9,9 +10,12 @@ from fastapi_users.authentication import (
 )
 from fastapi_users.db import SQLAlchemyUserDatabase
 from app.db import User, get_async_session, get_user_db
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Secret key used to sign JWT tokens
-SECRET = "SUPERSECRET"
+SECRET = os.getenv("SECRET", "SUPERSECRET")
 
 
 # Custom user manager - handles user registration, password reset, verification

@@ -1,6 +1,25 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+function getErrorMessage(detail: unknown, fallback: string) {
+  if (typeof detail === "string") return detail;
+
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object" && "msg" in item) {
+          return String(item.msg);
+        }
+        return "";
+      })
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  return fallback;
+}
+
 export async function GET() {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
@@ -13,8 +32,9 @@ export async function GET() {
   });
 
   if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
     return NextResponse.json(
-      { error: "Failed to fetch user" },
+      { error: getErrorMessage(errorData.detail, "Failed to fetch user") },
       { status: res.status },
     );
   }
@@ -51,7 +71,15 @@ export async function PATCH(req: Request) {
     const errorData = await res
       .json()
       .catch(() => ({ error: "Failed to update user" }));
-    return NextResponse.json(errorData, { status: res.status });
+    return NextResponse.json(
+      {
+        detail: getErrorMessage(
+          errorData.detail ?? errorData.error,
+          "Failed to update user",
+        ),
+      },
+      { status: res.status },
+    );
   }
 
   return NextResponse.json(await res.json());

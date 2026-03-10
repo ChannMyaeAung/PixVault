@@ -5,6 +5,7 @@ import Providers from "./providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import Navbar from "@/components/navbar";
 import FooterPage from "@/components/footer";
+import { Toaster } from "@/components/ui/sonner";
 
 const raleway = Raleway({
   subsets: ["latin"],
@@ -35,6 +36,7 @@ export default function RootLayout({
             <Navbar />
             {children}
             <FooterPage />
+            <Toaster richColors position="top-right" />
           </Providers>
         </ThemeProvider>
       </body>

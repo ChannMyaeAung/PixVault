@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Item, ItemContent, ItemMedia } from "@/components/ui/item";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [password, setPassword] = useState("");
@@ -18,7 +20,10 @@ export default function ProfilePage() {
     queryKey: ["user"],
     queryFn: async () => {
       const res = await fetch("/api/user/me");
-      if (!res.ok) throw new Error("Failed to fetch user");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to fetch user");
+      }
       return res.json();
     },
   });
@@ -42,8 +47,10 @@ export default function ProfilePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
       setPassword(""); // Clear the password field for security
-      alert("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
+      router.push("/dashboard");
     },
     onError: (error) =>
       toast.error(error.message || "An error occurred updating the profile."),

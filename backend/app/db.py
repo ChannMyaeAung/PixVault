@@ -17,6 +17,7 @@ import os
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
+SQL_ECHO = os.getenv("SQL_ECHO", "false").lower() == "true"
 
 
 # base class that all models inherit from
@@ -56,7 +57,7 @@ class Post(Base):
     user = relationship("User", back_populates="posts")
 
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(DATABASE_URL, echo=SQL_ECHO)
 
 # Session factory - creates a new session for each request
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
