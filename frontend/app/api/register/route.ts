@@ -11,7 +11,14 @@ export async function POST(req: Request) {
         body: JSON.stringify(body),
     })
 
-    const data = await backendRes.json();
+    const raw = await backendRes.text();
+    let data: Record<string, unknown> = {};
+
+    try {
+        data = raw ? JSON.parse(raw) : {};
+    } catch {
+        data = { detail: raw || "Registration failed." };
+    }
 
     return NextResponse.json(data, {status: backendRes.status})
 }
