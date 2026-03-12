@@ -13,10 +13,37 @@ from fastapi_users.db import (
 from fastapi import Depends
 from dotenv import load_dotenv
 import os
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
+UNSUPPORTED_ASYNCPG_QUERY_PARAMS = {"channel_binding"}
+
+def normalize_database_url(database_url: str) -> str:
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif database_url.startswith("postgresql://") and "+asyncpg" not in database_url:
+        database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+    parts = urlsplit(database_url)
+    if not parts.query:
+        return database_url
+
+    query_params = []
+    for key, value in parse_qsl(parts.query, keep_blank_values=True):
+        if key in UNSUPPORTED_ASYNCPG_QUERY_PARAMS:
+            continue
+        if key == "sslmode":
+            query_params.append(("ssl", value))
+        else:
+            query_params.append((key, value))
+
+    return urlunsplit(parts._replace(query=urlencode(query_params)))
+
+
+DATABASE_URL = normalize_database_url(
+    os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
+)
 SQL_ECHO = os.getenv("SQL_ECHO", "false").lower() == "true"
 
 
