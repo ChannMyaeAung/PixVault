@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -8,20 +8,78 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { FileUpload } from "@/components/ui/file-upload";
 
+type UploadAuthResponse = {
+  token: string;
+  expire: number;
+  signature: string;
+  publicKey: string;
+  uploadUrl: string;
+};
+
+const MAX_IMAGE_PIXELS = 24_000_000;
+
+async function downscaleImageIfNeeded(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) {
+    return file;
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Failed to read selected image."));
+      img.src = objectUrl;
+    });
+
+    const width = image.naturalWidth;
+    const height = image.naturalHeight;
+    const totalPixels = width * height;
+
+    if (totalPixels <= MAX_IMAGE_PIXELS) {
+      return file;
+    }
+
+    const scale = Math.sqrt(MAX_IMAGE_PIXELS / totalPixels);
+    const newWidth = Math.max(1, Math.floor(width * scale));
+    const newHeight = Math.max(1, Math.floor(height * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = newWidth;
+    canvas.height = newHeight;
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("Unable to process image.");
+    }
+
+    context.drawImage(image, 0, 0, newWidth, newHeight);
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", 0.9);
+    });
+
+    if (!blob) {
+      throw new Error("Unable to process image.");
+    }
+
+    const baseName = file.name.replace(/\.[^/.]+$/, "");
+    return new File([blob], `${baseName}-optimized.jpg`, {
+      type: "image/jpeg",
+      lastModified: Date.now(),
+    });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 export default function UploadPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
   const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
-
-  // Clean up object URLs to prevent memory leaks when preview changes or unmounts
-  useEffect(() => {
-    return () => {
-      if (preview) URL.revokeObjectURL(preview);
-    };
-  }, [preview]);
 
   // FIX: Accept an array of files, then extract the first one
   const handleFileUpload = (files: File[]) => {
@@ -37,20 +95,72 @@ export default function UploadPage() {
     mutationFn: async () => {
       if (!file) throw new Error("Please select a file to upload");
 
-      const formData = new FormData();
-      formData.append("file", file); // This will now properly append a File blob
-      formData.append("caption", caption);
+      const uploadFile = await downscaleImageIfNeeded(file);
 
-      const res = await fetch("/api/upload", {
+      // 1) Fetch signed auth params from backend (small request)
+      const authRes = await fetch("/api/upload/auth", {
         method: "POST",
-        body: formData,
+      });
+      if (!authRes.ok) {
+        const data = await authRes.json().catch(() => ({}));
+        throw new Error((data.detail as string) || "Failed to authorize upload.");
+      }
+      const authData = (await authRes.json()) as UploadAuthResponse;
+
+      // 2) Upload file directly to ImageKit (bypasses Vercel body limits)
+      const imageKitFormData = new FormData();
+      imageKitFormData.append("file", uploadFile);
+      imageKitFormData.append("fileName", uploadFile.name);
+      imageKitFormData.append("publicKey", authData.publicKey);
+      imageKitFormData.append("token", authData.token);
+      imageKitFormData.append("expire", String(authData.expire));
+      imageKitFormData.append("signature", authData.signature);
+      imageKitFormData.append("useUniqueFileName", "true");
+
+      const uploadRes = await fetch(authData.uploadUrl, {
+        method: "POST",
+        body: imageKitFormData,
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || "Upload failed. Please try again.");
+      const uploadRaw = await uploadRes.text();
+      let uploadData: Record<string, unknown> = {};
+      try {
+        uploadData = uploadRaw ? JSON.parse(uploadRaw) : {};
+      } catch {
+        uploadData = { message: uploadRaw || "Upload failed." };
       }
-      return res.json();
+
+      if (!uploadRes.ok || typeof uploadData.url !== "string") {
+        throw new Error(
+          (uploadData.message as string) ||
+            (uploadData.error as string) ||
+            "Upload failed. Please try again.",
+        );
+      }
+
+      // 3) Persist metadata to backend DB
+      const saveRes = await fetch("/api/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          caption,
+          url: uploadData.url,
+          file_name:
+            (uploadData.name as string) ||
+            (uploadData.fileName as string) ||
+            uploadFile.name,
+          file_type: uploadFile.type.startsWith("video/") ? "video" : "image",
+        }),
+      });
+
+      if (!saveRes.ok) {
+        const data = await saveRes.json().catch(() => ({}));
+        throw new Error((data.detail as string) || "Failed to save post metadata.");
+      }
+
+      return saveRes.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["feed"] });

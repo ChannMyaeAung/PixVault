@@ -24,12 +24,20 @@ const RegisterPage = () => {
         body: JSON.stringify({ email, password }),
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.detail || "Registration failed");
+      const raw = await res.text();
+      let data: Record<string, unknown> = {};
+
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        data = { detail: raw || "Registration failed" };
       }
 
-      return res.json();
+      if (!res.ok) {
+        throw new Error((data.detail as string) || "Registration failed");
+      }
+
+      return data;
     },
     onSuccess: () => {
       router.push("/login");
