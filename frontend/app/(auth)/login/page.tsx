@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const LoginPage = () => {
@@ -14,6 +14,12 @@ const LoginPage = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // Warm up the Heroku backend as soon as the login page loads
+  // so the dyno is ready by the time the user submits credentials
+  useEffect(() => {
+    fetch("/api/warmup").catch(() => {});
+  }, []);
 
   const loginMutation = useMutation({
     mutationFn: async (formData: FormData) => {
