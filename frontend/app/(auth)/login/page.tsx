@@ -90,6 +90,28 @@ const LoginPage = () => {
                 "Login"
               )}
             </Button>
+
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">or</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={loginMutation.isPending}
+              onClick={() => {
+                setEmail("user@example.com");
+                setPassword("12345678");
+              }}
+            >
+              Use Demo Account
+            </Button>
           </form>
 
           <p className="text-sm text-center mt-4 text-muted-foreground">
