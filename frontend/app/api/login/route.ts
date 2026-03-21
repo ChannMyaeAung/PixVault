@@ -38,22 +38,13 @@ export async function POST(req: Request) {
     }
   });
 
-  let backendRes: Response;
-  try {
-    backendRes = await fetch(`${process.env.FASTAPI_URL}/auth/jwt/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: params.toString(),
-      signal: AbortSignal.timeout(20000),
-    });
-  } catch {
-    return NextResponse.json(
-      { error: "Could not reach the server. Please try again in a moment." },
-      { status: 503 },
-    );
-  }
+  const backendRes = await fetch(`${process.env.FASTAPI_URL}/auth/jwt/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: params.toString(),
+  });
 
   const raw = await backendRes.text();
   let data: Record<string, unknown> = {};
@@ -72,6 +63,7 @@ export async function POST(req: Request) {
   }
 
   // Only set the cookie if it's a real string token because response.cookies.set() will throw if value is not a string
+
   const accessToken =
     typeof data.access_token === "string" ? data.access_token : null;
 
