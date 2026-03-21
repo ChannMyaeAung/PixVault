@@ -38,13 +38,22 @@ export async function POST(req: Request) {
     }
   });
 
-  const backendRes = await fetch(`${process.env.FASTAPI_URL}/auth/jwt/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: params.toString(),
-  });
+  let backendRes: Response;
+  try {
+    backendRes = await fetch(`${process.env.FASTAPI_URL}/auth/jwt/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params.toString(),
+      signal: AbortSignal.timeout(20000),
+    });
+  } catch {
+    return NextResponse.json(
+      { error: "Could not reach the server. Please try again in a moment." },
+      { status: 503 },
+    );
+  }
 
   const raw = await backendRes.text();
   let data: Record<string, unknown> = {};
