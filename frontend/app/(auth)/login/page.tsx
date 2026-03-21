@@ -17,20 +17,15 @@ const LoginPage = () => {
 
   // Store the warmup promise so login can await it before submitting,
   // ensuring the Heroku dyno is fully awake on the first attempt.
-  const warmupRef = useRef<Promise<boolean>>(Promise.resolve(true));
+  const warmupRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
-    warmupRef.current = fetch("/api/warmup")
-      .then((res) => res.ok)
-      .catch(() => false);
+    warmupRef.current = fetch("/api/warmup").then(() => {}).catch(() => {});
   }, []);
 
   const loginMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const backendReady = await warmupRef.current;
-      if (!backendReady) {
-        throw new Error("Server is taking too long to wake up. Please try again in a moment.");
-      }
+      await warmupRef.current;
       const res = await fetch("/api/login", {
         method: "POST",
         body: formData,
