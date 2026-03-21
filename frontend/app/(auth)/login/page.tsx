@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const LoginPage = () => {
@@ -15,14 +15,17 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Warm up the Heroku backend as soon as the login page loads
-  // so the dyno is ready by the time the user submits credentials
+  // Store the warmup promise so login can await it before submitting,
+  // ensuring the Heroku dyno is fully awake on the first attempt.
+  const warmupRef = useRef<Promise<void>>(Promise.resolve());
+
   useEffect(() => {
-    fetch("/api/warmup").catch(() => {});
+    warmupRef.current = fetch("/api/warmup").then(() => {}).catch(() => {});
   }, []);
 
   const loginMutation = useMutation({
     mutationFn: async (formData: FormData) => {
+      await warmupRef.current;
       const res = await fetch("/api/login", {
         method: "POST",
         body: formData,
@@ -106,11 +109,17 @@ const LoginPage = () => {
               className="w-full"
               disabled={loginMutation.isPending}
               onClick={() => {
-                setEmail("user@example.com");
-                setPassword("12345678");
+                const formData = new FormData();
+                formData.append("email", "user@example.com");
+                formData.append("password", "12345678");
+                loginMutation.mutate(formData);
               }}
             >
-              Use Demo Account
+              {loginMutation.isPending ? (
+                <Loader2 className="animate-spin h-4 w-4" />
+              ) : (
+                "Use Demo Account"
+              )}
             </Button>
           </form>
 
