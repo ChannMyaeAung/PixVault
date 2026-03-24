@@ -26,10 +26,6 @@ const PostCard = ({ post }: { post: PostType }) => {
       return res.json();
     },
 
-    onSuccess: () => {
-      // Refetch feed automatically by making cached query data as stale
-      queryClient.invalidateQueries({ queryKey: ["feed"] });
-    },
     // Runs immediately when mutate() is called
     // Remove the post from UI Before the server confirms deletion (Optimistic Update)
     onMutate: async (id: string) => {

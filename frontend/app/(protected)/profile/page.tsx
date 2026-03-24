@@ -70,7 +70,7 @@ export default function ProfilePage() {
 
   if (isLoading)
     return (
-      <div className="flex w-full max-w-md mx-auto p-4 flex-col gap-4 [--radius:1rem]">
+      <div className="flex w-full min-h-screen max-w-md items-center justify-center mx-auto p-4 flex-col gap-4 [--radius:1rem]">
         <Item variant={"muted"}>
           <ItemMedia>
             <Spinner />

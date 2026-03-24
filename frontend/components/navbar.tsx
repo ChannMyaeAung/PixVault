@@ -22,6 +22,48 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 
+type User = { url?: string; email?: string };
+
+const UserMenu = ({
+  user,
+  onSignOut,
+}: {
+  user: User;
+  onSignOut: () => void;
+}) => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="ghost" size="icon" className="rounded-full">
+        <Avatar>
+          <AvatarImage src={user?.url} />
+          <AvatarFallback>{user?.email?.split("@")[0]}</AvatarFallback>
+        </Avatar>
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end">
+      <DropdownMenuGroup>
+        <DropdownMenuItem>
+          <BadgeCheckIcon />
+          <HoveredLink href="/profile">Account</HoveredLink>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <CreditCardIcon />
+          Billing
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <BellIcon />
+          Notifications
+        </DropdownMenuItem>
+      </DropdownMenuGroup>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem variant="destructive" onClick={onSignOut}>
+        <LogOutIcon />
+        Sign Out
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+);
+
 const Navbar = ({ className }: { className?: string }) => {
   const [active, setActive] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -34,7 +76,7 @@ const Navbar = ({ className }: { className?: string }) => {
       if (!res.ok) throw new Error("Failed to fetch user");
       return res.json();
     },
-    retry: false, // Don't retry on failure, we just want to know if the user is logged in or not, this is to avoid repeated failed requests when logged out.
+    retry: false,
   });
 
   const isLoggedIn = !isError && !!user;
@@ -61,50 +103,10 @@ const Navbar = ({ className }: { className?: string }) => {
             <div className="flex flex-col space-y text-sm">
               <HoveredLink href="/upload">Upload</HoveredLink>
               <HoveredLink href="/dashboard">Dashboard</HoveredLink>
-
               {!isLoggedIn ? (
                 <HoveredLink href="/login">Login</HoveredLink>
               ) : (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full"
-                    >
-                      <Avatar>
-                        <AvatarImage src={user?.url} />
-                        <AvatarFallback>
-                          {user?.email?.split("@")[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuGroup>
-                      <DropdownMenuItem>
-                        <BadgeCheckIcon />
-                        <HoveredLink href="/profile">Account</HoveredLink>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <CreditCardIcon />
-                        Billing
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <BellIcon />
-                        Notifications
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onClick={handleSignOut}
-                    >
-                      <LogOutIcon />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <UserMenu user={user} onSignOut={handleSignOut} />
               )}
             </div>
           </MenuItem>
@@ -118,48 +120,11 @@ const Navbar = ({ className }: { className?: string }) => {
           </HoveredLink>
           <HoveredLink href="/upload">Upload</HoveredLink>
           <HoveredLink href="/dashboard">Dashboard</HoveredLink>
-
           {!isLoggedIn ? (
             <HoveredLink href="/login">Login</HoveredLink>
           ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <Avatar>
-                    <AvatarImage src={user?.url} />
-                    <AvatarFallback>
-                      {user?.email?.split("@")[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <BadgeCheckIcon />
-                    <HoveredLink href="/profile">Account</HoveredLink>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <CreditCardIcon />
-                    Billing
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <BellIcon />
-                    Notifications
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={handleSignOut}
-                >
-                  <LogOutIcon />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <UserMenu user={user} onSignOut={handleSignOut} />
           )}
-
           <ModeToggle />
         </div>
       </Menu>

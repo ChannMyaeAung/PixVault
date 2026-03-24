@@ -45,7 +45,7 @@ const Dashboard = () => {
 
   if (isLoading)
     return (
-      <div className="min-h-screen px-6 py-20 md:py-32">
+      <div className="flex items-center justify-center min-h-screen px-6 py-20 md:py-32">
         <div className="max-w-md mx-auto">
           <Item variant={"muted"}>
             <ItemMedia>
