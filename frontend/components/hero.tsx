@@ -4,8 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
-import { LockIcon, Smartphone, Zap } from "lucide-react";
 import FeaturesCard from "./features-card";
+import { motion } from "motion/react";
+
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 18 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] as const, delay },
+});
 
 const HeroPage = () => {
   const { data: user, isError } = useQuery({
@@ -15,24 +21,33 @@ const HeroPage = () => {
       if (!res.ok) throw new Error("Failed to fetch user");
       return res.json();
     },
-    retry: false, // Don't retry on failure, we just want to know if the user is logged in or not, this is to avoid repeated failed requests when logged out.
+    retry: false,
   });
 
   const isLoggedIn = !isError && !!user;
 
   return (
     <div className="max-w-7xl w-full mx-auto space-y-8">
-      <h1 className="text-5xl flex flex-col md:flex-row items-center justify-center md:text-7xl font-extrabold tracking-tight gap-3">
+      <motion.h1
+        {...fadeUp(0)}
+        className="text-5xl flex flex-col md:flex-row items-center justify-center md:text-7xl font-extrabold tracking-tight gap-3"
+      >
         Your Secure <span className="text-blue-600"> Media Vault</span>
-      </h1>
+      </motion.h1>
 
-      <p className="text-lg md:text-xl text-center max-w-2xl mx-auto leading-relaxed">
-        Store, manage, and protect your personal phots and videos with ease.
-        Built with lightning-fast web technologies to ensure your privacy statys
+      <motion.p
+        {...fadeUp(0.1)}
+        className="text-lg md:text-xl text-center max-w-2xl mx-auto leading-relaxed"
+      >
+        Store, manage, and protect your personal photos and videos with ease.
+        Built with lightning-fast web technologies to ensure your privacy stays
         strictly yours.
-      </p>
+      </motion.p>
 
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+      <motion.div
+        {...fadeUp(0.2)}
+        className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
+      >
         {isLoggedIn ? (
           <Button size={"lg"} asChild className="text-base px-8 h-12">
             <Link href={"/dashboard"}>Open Your Vault</Link>
@@ -56,11 +71,11 @@ const HeroPage = () => {
             </Button>
           </>
         )}
-      </div>
+      </motion.div>
 
-      {/* Feature Grid*/}
-
-      <FeaturesCard />
+      <motion.div {...fadeUp(0.3)}>
+        <FeaturesCard />
+      </motion.div>
     </div>
   );
 };

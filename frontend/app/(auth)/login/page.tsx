@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { motion } from "motion/react";
 
 const LoginPage = () => {
   const router = useRouter();
@@ -62,7 +63,13 @@ const LoginPage = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
-      <Card className="w-full max-w-md">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+        className="w-full max-w-md"
+      >
+      <Card className="w-full">
         <CardHeader>
           <CardTitle className="text-2xl text-center">
             Login to PixVault
@@ -131,6 +138,7 @@ const LoginPage = () => {
           </p>
         </CardContent>
       </Card>
+      </motion.div>
     </div>
   );
 };

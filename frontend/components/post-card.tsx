@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import React, { useState } from "react";
 import { Button } from "./ui/button";
+import { motion } from "motion/react";
 
 const PostCard = ({ post }: { post: PostType }) => {
   const queryClient = useQueryClient();
@@ -62,7 +63,12 @@ const PostCard = ({ post }: { post: PostType }) => {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="border rounded-xl p-4 space-y-3 shadow-sm">
+    <motion.div
+      className="border rounded-xl p-4 space-y-3 shadow-sm"
+      whileHover={{ y: -3, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
+      animate={{ opacity: deleteMutation.isPending ? 0.5 : 1 }}
+      transition={{ duration: 0.2 }}
+    >
       <div className="max-w-md max-h-md relative aspect-square">
         {post.file_type === "image" ? (
           imgError ? (
@@ -105,7 +111,7 @@ const PostCard = ({ post }: { post: PostType }) => {
           {deleteMutation.isPending ? "Deleting..." : "Delete"}
         </Button>
       )}
-    </div>
+    </motion.div>
   );
 };
 

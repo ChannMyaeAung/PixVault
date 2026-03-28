@@ -4,6 +4,7 @@ import { FeedResponse, PostType } from "./type";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import PostCard from "@/components/post-card";
+import { motion } from "motion/react";
 import { Item, ItemContent, ItemMedia } from "@/components/ui/item";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
@@ -120,8 +121,15 @@ const Dashboard = () => {
           </Empty>
         ) : (
           <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {data?.posts.map((post: PostType) => (
-              <PostCard key={post.id} post={post} />
+            {data?.posts.map((post: PostType, i: number) => (
+              <motion.div
+                key={post.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: i * 0.05, ease: [0.25, 0.1, 0.25, 1] }}
+              >
+                <PostCard post={post} />
+              </motion.div>
             ))}
           </section>
         )}

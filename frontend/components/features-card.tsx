@@ -50,7 +50,7 @@ export default function FeaturesCard() {
     {
       title: "Money back guarantee",
       description:
-        "If you donot like EveryAI, we will convince you to like us.",
+        "If you donot like PixVault, we will convince you to like us.",
       icon: <IconAdjustmentsBolt />,
     },
     {

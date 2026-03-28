@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Item, ItemContent, ItemMedia } from "@/components/ui/item";
@@ -81,7 +82,12 @@ export default function ProfilePage() {
     );
 
   return (
-    <div className="max-w-md mx-auto px-8 flex items-center flex-col justify-center min-h-screen space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+      className="max-w-md mx-auto px-8 flex items-center flex-col justify-center min-h-screen space-y-6"
+    >
       <h1 className="text-2xl font-bold self-start">Profile Settings</h1>
       <form onSubmit={handleSubmit} className="space-y-4 self-start">
         <div className="space-y-2">
@@ -109,6 +115,6 @@ export default function ProfilePage() {
           {updateMutation.isPending ? "Updating..." : "Save Changes"}
         </Button>
       </form>
-    </div>
+    </motion.div>
   );
 }

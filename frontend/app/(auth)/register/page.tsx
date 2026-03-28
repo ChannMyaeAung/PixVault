@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { motion } from "motion/react";
 
 const RegisterPage = () => {
   const router = useRouter();
@@ -51,7 +52,13 @@ const RegisterPage = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
-      <Card className="w-full max-w-md">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+        className="w-full max-w-md"
+      >
+      <Card className="w-full">
         <CardHeader>
           <CardTitle className="text-2xl text-center">
             Create an account
@@ -98,6 +105,7 @@ const RegisterPage = () => {
           </p>
         </CardContent>
       </Card>
+      </motion.div>
     </div>
   );
 };
