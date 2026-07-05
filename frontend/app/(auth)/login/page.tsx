@@ -15,6 +15,7 @@ const LoginPage = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isDemoLogin, setIsDemoLogin] = useState(false);
 
   // Store the warmup promise so login can await it before submitting,
   // ensuring the Heroku dyno is fully awake on the first attempt.
@@ -24,20 +25,51 @@ const LoginPage = () => {
     warmupRef.current = fetch("/api/warmup").then(() => {}).catch(() => {});
   }, []);
 
+  const attemptLogin = async (formData: FormData) => {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(
+        errorData.error || errorData.detail || "Login failed.",
+      );
+    }
+    return res.json();
+  };
+
   const loginMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
+    mutationFn: async ({
+      formData,
+      retries = 0,
+    }: {
+      formData: FormData;
+      retries?: number;
+    }) => {
       await warmupRef.current;
-      const res = await fetch("/api/login", {
-        method: "POST",
-        body: formData,
-      });
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(
-          errorData.error || errorData.detail || "Login failed.",
-        );
+
+      let lastError = new Error("Login failed.");
+      const maxAttempts = retries + 1;
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          return await attemptLogin(formData);
+        } catch (error) {
+          lastError =
+            error instanceof Error ? error : new Error("Login failed.");
+
+          if (attempt < maxAttempts - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            warmupRef.current = fetch("/api/warmup")
+              .then(() => {})
+              .catch(() => {});
+            await warmupRef.current;
+          }
+        }
       }
-      return res.json();
+
+      throw lastError;
     },
     // Invalidate the "me" and "user" queries to update the app state so that when the user logged in, they will see the Avatar instead of Login button in the Navbar
     onSuccess: async () => {
@@ -58,7 +90,18 @@ const LoginPage = () => {
     const formData = new FormData();
     formData.append("email", email);
     formData.append("password", password);
-    loginMutation.mutate(formData);
+    loginMutation.mutate({ formData });
+  };
+
+  const handleDemoLogin = () => {
+    const formData = new FormData();
+    formData.append("email", "user@example.com");
+    formData.append("password", "12345678");
+    setIsDemoLogin(true);
+    loginMutation.mutate(
+      { formData, retries: 1 },
+      { onSettled: () => setIsDemoLogin(false) },
+    );
   };
 
   return (
@@ -115,14 +158,14 @@ const LoginPage = () => {
               variant="outline"
               className="w-full"
               disabled={loginMutation.isPending}
-              onClick={() => {
-                const formData = new FormData();
-                formData.append("email", "user@example.com");
-                formData.append("password", "12345678");
-                loginMutation.mutate(formData);
-              }}
+              onClick={handleDemoLogin}
             >
-              {loginMutation.isPending ? (
+              {loginMutation.isPending && isDemoLogin ? (
+                <>
+                  <Loader2 className="animate-spin h-4 w-4" />
+                  Logging in...
+                </>
+              ) : loginMutation.isPending ? (
                 <Loader2 className="animate-spin h-4 w-4" />
               ) : (
                 "Use Demo Account"
